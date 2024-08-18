@@ -41,6 +41,20 @@ typedef struct
     SDL_Color color;
 } tSnake;
 
+tSnake initPlayer(){
+    tSnake player =
+    {
+        1,   // start size
+        {{2, 2}}, // start X Y
+        2,   // start movedir
+        false,
+        0,
+        {0, 230, 0}, // head Color
+    };
+
+    return player;
+}
+
 void createApple(tSnake player, tObj *apple){
     tObj blankSp[(cellsNum*cellsNum)+1];
     bool flag = false;
@@ -66,8 +80,12 @@ void createApple(tSnake player, tObj *apple){
             }
         }
     }
-
+    
     *apple = blankSp[rand()%l];
+}
+
+void resetGame(tSnake *player){
+    *player = initPlayer();
 }
 
 int main(int argc, char **argv)
@@ -85,19 +103,14 @@ int main(int argc, char **argv)
     cell.h = cellSize;
     cell.w = cellSize;
 
-    tSnake player =
-    {
-        3,   // start size
-        {{2, 2}}, // start X Y
-        2,   // start movedir
-        false,
-        0,
-        {0, 230, 0}, // head Color
-    };
+    
+    
+    tSnake player = initPlayer();
 
     tObj apple; //= {(rand()%(cellsNum-1))+1, (rand()%(cellsNum-1))+1}; 
     createApple(player, &apple);
     printf("|%d, %d|\n", apple.x, apple.y);
+    bool gameOver = false;
 
     while (true)
     {
@@ -112,6 +125,12 @@ int main(int argc, char **argv)
             }
             if (event.type == SDL_KEYDOWN)
             {
+                if (event.key.keysym.sym == SDLK_r)
+                {
+                    resetGame(&player);
+                    createApple(player, &apple);
+                }
+                
                 if (player.moved)
                 {
                     if (event.key.keysym.sym == SDLK_w && player.moveDir != 3 && player.moveDir != 1)
@@ -139,7 +158,6 @@ int main(int argc, char **argv)
         {
             player.pos[i] = player.pos[i-1];
         }
-        
 
         //Move Player
         switch (player.moveDir)
@@ -173,6 +191,31 @@ int main(int argc, char **argv)
             player.size++;
         }
 
+        //Colision
+        if (player.pos[0].x > cellsNum || player.pos[0].x < 1)
+        {
+            gameOver = true;
+        }else if (player.pos[0].y > cellsNum || player.pos[0].y < 1)
+        {
+            gameOver = true;
+        }
+
+        for (int i = 1; i <= player.size; i++)
+        {
+            if (player.pos[0].x == player.pos[i].x && player.pos[0].y == player.pos[i].y)
+            {
+                gameOver = true;
+            }            
+        }
+
+        //Game Over
+        if(gameOver){
+            resetGame(&player);
+            createApple(player, &apple);
+            gameOver = false;
+            SDL_Delay(1000);
+        }
+        
         // Render Objects
         for (int i = 1; i <= cellsNum; i++)
         {
@@ -196,7 +239,7 @@ int main(int argc, char **argv)
                 } 
 
                 // Render Player
-                for (int k = player.size; k >= 0; k--)
+                for (int k = player.size-1; k >= 0; k--)
                 {
                     if (i == player.pos[k].x && j == player.pos[k].y){
                         SDL_SetRenderDrawColor(renderer, k*150/player.size, player.color.g, k*150/player.size, 255);
@@ -212,7 +255,7 @@ int main(int argc, char **argv)
         SDL_SetRenderDrawColor(renderer, 15, 15, 15, 255); // Background Collor
         SDL_RenderPresent(renderer);                        // Fill the Screen with background collor
 
-        SDL_Delay(100);
+        SDL_Delay(200);
     }
 
     // END OF PROGRAM
