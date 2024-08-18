@@ -76,9 +76,41 @@ int main(int argc, char **argv)
             }
         }
 
+        // Objects
+        for (int i = 1; i < cellsNum; i++)
+        {
+            for (int j = 1; j < cellsNum; j++)
+            {
+                cell.x = centerGridW + i*(gridSize / cellsNum);
+                cell.y = centerGridH + j*(gridSize / cellsNum);
+
+
+                // render Cells
+                if ((i+j) % 2 == 0)
+                {
+                    SDL_SetRenderDrawColor(renderer, 30, 30, 30, 255); // Defaut color
+                } else {
+                    SDL_SetRenderDrawColor(renderer, 40, 40, 40, 255); // Defaut color
+                }
+
+                // Render Player
+                if (i == player1.x && j == player1.y){
+                    SDL_SetRenderDrawColor(renderer, player1.hRGB, 255); // Defaut color
+                    
+                }
+                
+                
+                SDL_RenderFillRect(renderer, &cell);               // Fill the Cells
+            }
+            
+        }
+        
+
+
+
         // BACKGROUND
-        SDL_SetRenderDrawColor(renderer, 15, 255, 15, 255); // Background Collor
-        SDL_RenderPresent(renderer);                       // Fill the Screen with background collor
+        SDL_SetRenderDrawColor(renderer, 15, 15, 15, 255); // Background Collor
+        SDL_RenderPresent(renderer);                        // Fill the Screen with background collor
 
         SDL_Delay(100);
     }
