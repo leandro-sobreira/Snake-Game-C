@@ -15,7 +15,7 @@ g++ .\Snake.c -I ..\SDL2\x86_64-w64-mingw32\include\ -L ..\SDL2\x86_64-w64-mingw
 
    ==========X== CODE TO COMPILE ==X============== */
 
-#define windowW 640
+#define windowW 480
 #define windowH 480
 
 #define cellsNum 20  // Number of cells in the grid = (cellNum*cellNum)
@@ -39,8 +39,7 @@ typedef struct
     int moveDir; // 1 = UP, 2 = RIGHT, 3 = DOWN, 4 = LEFT
     bool moved;
     int score;
-    SDL_Color hRGB;
-    SDL_Color tRGB;
+    SDL_Color color;
 } tSnake;
 
 int main(int argc, char **argv)
@@ -58,23 +57,22 @@ int main(int argc, char **argv)
     cell.h = cellSize;
     cell.w = cellSize;
 
-    tSnake player1 =
+    tSnake player =
     {
         1,   // start size
         {{2, 2}, {1,1}}, // start X Y
         2,   // start movedir
         false,
         0,
-        {0, 180, 0}, // head Color
-        {0, 255, 0}  // tail Color
+        {0, 230, 0}, // head Color
     };
 
-    tObj apple = {rand()%cellsNum, rand()%cellsNum};    
+    tObj apple = {(rand()%(cellsNum-1))+1, (rand()%(cellsNum-1))+1}; 
+    printf("|%d, %d|\n", apple.x, apple.y);
 
     while (true)
     {
         SDL_RenderClear(renderer); // Clear the Screen
-        
 
         SDL_Event event;
         while (SDL_PollEvent(&event))
@@ -85,59 +83,65 @@ int main(int argc, char **argv)
             }
             if (event.type == SDL_KEYDOWN)
             {
-                if (player1.moved)
+                if (player.moved)
                 {
-                    if (event.key.keysym.sym == SDLK_w && player1.moveDir != 3 && player1.moveDir != 1)
+                    if (event.key.keysym.sym == SDLK_w && player.moveDir != 3 && player.moveDir != 1)
                     {
-                        player1.moveDir = 1;
-                        player1.moved = false;
-                    } else if (event.key.keysym.sym == SDLK_d && player1.moveDir != 4 && player1.moveDir != 2)
+                        player.moveDir = 1;
+                        player.moved = false;
+                    } else if (event.key.keysym.sym == SDLK_d && player.moveDir != 4 && player.moveDir != 2)
                     {
-                        player1.moveDir = 2;
-                        player1.moved = false;
-                    } else if (event.key.keysym.sym == SDLK_s && player1.moveDir != 1 && player1.moveDir != 3)
+                        player.moveDir = 2;
+                        player.moved = false;
+                    } else if (event.key.keysym.sym == SDLK_s && player.moveDir != 1 && player.moveDir != 3)
                     {
-                        player1.moveDir = 3;
-                        player1.moved = false;
-                    } else if (event.key.keysym.sym == SDLK_a && player1.moveDir != 2 && player1.moveDir != 4)
+                        player.moveDir = 3;
+                        player.moved = false;
+                    } else if (event.key.keysym.sym == SDLK_a && player.moveDir != 2 && player.moveDir != 4)
                     {
-                        player1.moveDir = 4;
-                        player1.moved = false;
+                        player.moveDir = 4;
+                        player.moved = false;
                     }
-                }                
-                
-            }
-            
+                }                        
+            }      
         }
+        //Move player segs
+        for (int i = player.size; i >= 1; i--)
+        {
+            player.pos[i] = player.pos[i-1];
+        }
+        
 
         //Move Player
-        switch (player1.moveDir)
+        switch (player.moveDir)
         {
             case 1:
-                player1.pos[0].y += -1;
-                player1.moved = true;
+                player.pos[0].y += -1;
+                player.moved = true;
             break;
 
             case 2:
-                player1.pos[0].x += 1;
-                player1.moved = true;
+                player.pos[0].x += 1;
+                player.moved = true;
             break;
 
             case 3:
-                player1.pos[0].y += 1;
-                player1.moved = true;
+                player.pos[0].y += 1;
+                player.moved = true;
             break;
 
             case 4:
-                player1.pos[0].x += -1;
-                player1.moved = true;
+                player.pos[0].x += -1;
+                player.moved = true;
             break;
         }     
            
          //Eat apple
-        if (player1.pos[0].x == apple.x && player1.pos[0].y == apple.y)
+        if (player.pos[0].x == apple.x && player.pos[0].y == apple.y)
         {
-            apple = {rand()%cellsNum, rand()%cellsNum}; 
+            apple = {(rand()%(cellsNum-1))+1, (rand()%(cellsNum-1))+1}; 
+            printf("|%d, %d|\n", apple.x, apple.y);
+            player.size++;
         }
 
         // Render Objects
@@ -163,18 +167,17 @@ int main(int argc, char **argv)
                 } 
 
                 // Render Player
-                    if (i == player1.pos[0].x && j == player1.pos[0].y){
-                        SDL_SetRenderDrawColor(renderer, player1.hRGB.r, player1.hRGB.g, player1.hRGB.b, 255);
+                for (int k = player.size; k >= 0; k--)
+                {
+                    if (i == player.pos[k].x && j == player.pos[k].y){
+                        SDL_SetRenderDrawColor(renderer, k*150/player.size, player.color.g, k*150/player.size, 255);
                     }
-                    
+                }
                 
                 SDL_RenderFillRect(renderer, &cell);               // Fill the Cells
             }
             
-        }
-
-       
-        
+        }     
 
         // BACKGROUND
         SDL_SetRenderDrawColor(renderer, 15, 15, 15, 255); // Background Collor
@@ -182,7 +185,6 @@ int main(int argc, char **argv)
 
         SDL_Delay(100);
     }
-
 
     // END OF PROGRAM
     SDL_DestroyRenderer(renderer);
