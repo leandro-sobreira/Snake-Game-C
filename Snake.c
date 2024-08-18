@@ -25,7 +25,6 @@ g++ .\Snake.c -I ..\SDL2\x86_64-w64-mingw32\include\ -L ..\SDL2\x86_64-w64-mingw
 #define centerGridH ((windowH - gridSize) / 2) - (gridSize / cellsNum)
 #define centerGridW ((windowW - gridSize) / 2) - (gridSize / cellsNum)
 
-
 typedef struct
 {
     int x;
@@ -41,6 +40,35 @@ typedef struct
     int score;
     SDL_Color color;
 } tSnake;
+
+void createApple(tSnake player, tObj *apple){
+    tObj blankSp[(cellsNum*cellsNum)+1];
+    bool flag = false;
+    int l = 0;
+
+    for (int i = 1; i <= cellsNum; i++)
+    {
+        for (int j = 1; j <= cellsNum; j++)
+        {
+            flag = false;
+            for (int k = 0; k < player.size; k++)
+            {
+                if (player.pos[k].x == i && player.pos[k].y == j)
+                {
+                    flag = true;
+                }   
+            }
+            if (!flag)
+            {
+                blankSp[l].x = i;
+                blankSp[l].y = j;
+                l++;
+            }
+        }
+    }
+
+    *apple = blankSp[rand()%l];
+}
 
 int main(int argc, char **argv)
 {
@@ -59,15 +87,16 @@ int main(int argc, char **argv)
 
     tSnake player =
     {
-        1,   // start size
-        {{2, 2}, {1,1}}, // start X Y
+        3,   // start size
+        {{2, 2}}, // start X Y
         2,   // start movedir
         false,
         0,
         {0, 230, 0}, // head Color
     };
 
-    tObj apple = {(rand()%(cellsNum-1))+1, (rand()%(cellsNum-1))+1}; 
+    tObj apple; //= {(rand()%(cellsNum-1))+1, (rand()%(cellsNum-1))+1}; 
+    createApple(player, &apple);
     printf("|%d, %d|\n", apple.x, apple.y);
 
     while (true)
@@ -139,16 +168,16 @@ int main(int argc, char **argv)
          //Eat apple
         if (player.pos[0].x == apple.x && player.pos[0].y == apple.y)
         {
-            apple = {(rand()%(cellsNum-1))+1, (rand()%(cellsNum-1))+1}; 
+            createApple(player, &apple);
             printf("|%d, %d|\n", apple.x, apple.y);
             player.size++;
         }
 
         // Render Objects
-        for (int i = 1; i < cellsNum; i++)
+        for (int i = 1; i <= cellsNum; i++)
         {
             cell.x = centerGridW + i*cellSize;
-            for (int j = 1; j < cellsNum; j++)
+            for (int j = 1; j <= cellsNum; j++)
             {
                 cell.y = centerGridH + j*cellSize;
 
