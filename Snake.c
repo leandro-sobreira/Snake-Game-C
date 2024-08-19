@@ -1,6 +1,7 @@
 #include <SDL2/SDL.h>
 #include <stdbool.h>
 #include <stdio.h>
+#include <math.h>
 
 /*
 ====================== SNAKE GAME ======================
@@ -18,7 +19,7 @@ g++ .\Snake.c -I ..\SDL2\x86_64-w64-mingw32\include\ -L ..\SDL2\x86_64-w64-mingw
 #define windowW 480
 #define windowH 480
 
-#define cellsNum 20  // Number of cells in the grid = (cellNum*cellNum)
+#define cellsNum 10  // Number of cells in the grid = (cellNum*cellNum)
 #define gridSize 400 //  Size of grid (in pixels)
 #define cellSize gridSize/cellsNum
 
@@ -88,6 +89,82 @@ void resetGame(tSnake *player){
     *player = initPlayer();
 }
 
+void AIsnake(tSnake *player, tObj apple){
+
+    int decide = rand()%2;
+    int opc[2] = {0, 0};
+    float disEu0, disEu1;
+
+
+    if (player->pos[0].x%2 == 0 && player->pos[0].y != 1)
+    {
+        opc[0] = 1; // Se o player está em uma coluna par ele pode ir para cima
+    } 
+    if(player->pos[0].x%2 == 1 && player->pos[0].y != cellsNum) {
+        opc[0] = 3; // Se o player está em uma coluna impar ele pode ir para baixo
+    }
+
+    if (player->pos[0].y%2 == 0 && player->pos[0].x != cellsNum)
+    {
+        opc[1] = 2; // Se o player está em uma linha par ele pode ir para direita
+    } 
+    if(player->pos[0].y%2 == 1 && player->pos[0].x != 1) {
+        opc[1] = 4; // Se o player está em uma linha impar ele pode ir para esquerda
+    }
+
+    if(opc[0] == 0){
+        player->moveDir = opc[1];
+    } else if(opc[1] == 0){
+        player->moveDir = opc[0];
+    } else {
+        for (int i = 1; i <= player->size; i++)
+        {
+            if (opc[0] == 1 && player->pos[0].x == player->pos[i].x && player->pos[0].y-1 == player->pos[i].y)
+            {
+                player->moveDir = opc[1];
+                break;
+            } else if (opc[0] == 3 && player->pos[0].x == player->pos[i].x && player->pos[0].y+1 == player->pos[i].y)
+            {
+                player->moveDir = opc[1];
+                break;
+            } else if (opc[1] == 2 && player->pos[0].x+1 == player->pos[i].x && player->pos[0].y == player->pos[i].y)
+            {
+                player->moveDir = opc[0];
+                break;
+            } else if (opc[1] == 4 && player->pos[0].x-1 == player->pos[i].x && player->pos[0].y == player->pos[i].y)
+            {
+                player->moveDir = opc[0];
+                break;
+            } else {
+                if(opc[0]==1){
+                    disEu0 = ((player->pos[0].x - apple.x)*(player->pos[0].x - apple.x)) + (((player->pos[0].y-1) - apple.y)*(player->pos[0].y-1 - apple.y));
+                } else {
+                    disEu0 = ((player->pos[0].x - apple.x)*(player->pos[0].x - apple.x)) + ((player->pos[0].y+1 - apple.y)*(player->pos[0].y+1 - apple.y));
+                }
+                if(opc[1]==2){
+                    disEu1 = (((player->pos[0].x+1) - apple.x)*((player->pos[0].x+1) - apple.x)) + ((player->pos[0].y - apple.y)*(player->pos[0].y - apple.y));
+                } else {
+                    disEu1 = (((player->pos[0].x-1) - apple.x)*((player->pos[0].x-1) - apple.x)) + ((player->pos[0].y - apple.y)*(player->pos[0].y - apple.y));
+                }
+                if (disEu0 == disEu1)
+                {
+                    if (decide)
+                    {
+                        player->moveDir = opc[0];
+                    } else {
+                        player->moveDir = opc[1];
+                    }
+                } else if (disEu0 < disEu1)
+                {
+                    player->moveDir = opc[0];
+                } else {
+                    player->moveDir = opc[1];
+                }
+            }
+        }        
+    }
+}
+
 int main(int argc, char **argv)
 {
     SDL_Init(SDL_INIT_EVERYTHING); // Initialize all resources of SDL
@@ -102,15 +179,13 @@ int main(int argc, char **argv)
     SDL_Rect cell;
     cell.h = cellSize;
     cell.w = cellSize;
-
-    
     
     tSnake player = initPlayer();
+    int runs = 0;
 
     tObj apple; //= {(rand()%(cellsNum-1))+1, (rand()%(cellsNum-1))+1}; 
     createApple(player, &apple);
-    printf("|%d, %d|\n", apple.x, apple.y);
-    bool gameOver = false;
+    bool gameReset = false;
 
     while (true)
     {
@@ -153,6 +228,9 @@ int main(int argc, char **argv)
                 }                        
             }      
         }
+
+        AIsnake(&player, apple);
+
         //Move player segs
         for (int i = player.size; i >= 1; i--)
         {
@@ -183,36 +261,46 @@ int main(int argc, char **argv)
             break;
         }     
            
+        runs++;
+
          //Eat apple
         if (player.pos[0].x == apple.x && player.pos[0].y == apple.y)
         {
-            createApple(player, &apple);
-            printf("|%d, %d|\n", apple.x, apple.y);
-            player.size++;
+            if (player.size >= cellsNum*cellsNum) //Wingame
+            {
+                printf("|runs = %d|\n", runs);
+                SDL_Delay(2000);
+                gameReset = true;
+            } else {
+                createApple(player, &apple);
+                player.size++;
+            }
+            
+            
         }
 
         //Colision
         if (player.pos[0].x > cellsNum || player.pos[0].x < 1)
         {
-            gameOver = true;
+            gameReset = true;
         }else if (player.pos[0].y > cellsNum || player.pos[0].y < 1)
         {
-            gameOver = true;
+            gameReset = true;
         }
 
         for (int i = 1; i <= player.size; i++)
         {
             if (player.pos[0].x == player.pos[i].x && player.pos[0].y == player.pos[i].y)
             {
-                gameOver = true;
+                gameReset = true;
             }            
         }
 
         //Game Over
-        if(gameOver){
+        if(gameReset){
             resetGame(&player);
             createApple(player, &apple);
-            gameOver = false;
+            gameReset = false;
             SDL_Delay(1000);
         }
         
@@ -255,7 +343,7 @@ int main(int argc, char **argv)
         SDL_SetRenderDrawColor(renderer, 15, 15, 15, 255); // Background Collor
         SDL_RenderPresent(renderer);                        // Fill the Screen with background collor
 
-        SDL_Delay(200);
+        SDL_Delay(10);
     }
 
     // END OF PROGRAM
