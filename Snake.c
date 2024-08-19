@@ -19,7 +19,7 @@ g++ .\Snake.c -I ..\SDL2\x86_64-w64-mingw32\include\ -L ..\SDL2\x86_64-w64-mingw
 #define windowW 480
 #define windowH 480
 
-#define cellsNum 10  // Number of cells in the grid = (cellNum*cellNum)
+#define cellsNum 20  // Number of cells in the grid = (cellNum*cellNum)
 #define gridSize 400 //  Size of grid (in pixels)
 #define cellSize gridSize/cellsNum
 
@@ -269,6 +269,7 @@ int main(int argc, char **argv)
             if (player.size >= cellsNum*cellsNum) //Wingame
             {
                 printf("|runs = %d|\n", runs);
+                runs = 0;
                 SDL_Delay(2000);
                 gameReset = true;
             } else {
@@ -343,7 +344,7 @@ int main(int argc, char **argv)
         SDL_SetRenderDrawColor(renderer, 15, 15, 15, 255); // Background Collor
         SDL_RenderPresent(renderer);                        // Fill the Screen with background collor
 
-        SDL_Delay(10);
+        SDL_Delay(1);
     }
 
     // END OF PROGRAM
