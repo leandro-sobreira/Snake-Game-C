@@ -1,6 +1,7 @@
 #include <SDL2/SDL.h>
 #include <stdbool.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <math.h>
 
 /*
@@ -66,7 +67,7 @@ void createApple(tSnake player, tObj *apple){
         for (int j = 1; j <= cellsNum; j++)
         {
             flag = false;
-            for (int k = 0; k < player.size; k++)
+            for (int k = 0; k <= player.size; k++)
             {
                 if (player.pos[k].x == i && player.pos[k].y == j)
                 {
@@ -81,8 +82,13 @@ void createApple(tSnake player, tObj *apple){
             }
         }
     }
+    if (player.size >= cellsNum*cellsNum)
+    {
+        *apple = {0,0};
+    }else{
+        *apple = blankSp[rand()%l];
+    }
     
-    *apple = blankSp[rand()%l];
 }
 
 void resetGame(tSnake *player){
@@ -91,75 +97,69 @@ void resetGame(tSnake *player){
 
 void AIsnake(tSnake *player, tObj apple){
 
-    int decide = rand()%2;
-    int opc[2] = {0, 0};
-    float disEu0, disEu1;
+   tObj opc[2] = {{0,0},{0,0}};
+   bool pColision = false;
+   float disEuX, disEuY;
 
-
-    if (player->pos[0].x%2 == 0 && player->pos[0].y != 1)
+    if (player->pos[0].x%2 == 0 && (player->pos[0].y != 1))
     {
-        opc[0] = 1; // Se o player está em uma coluna par ele pode ir para cima
+        opc[0].y = 1; // Se o player está em uma coluna par ele pode ir para cima
+        opc[1].y = -1; 
     } 
     if(player->pos[0].x%2 == 1 && player->pos[0].y != cellsNum) {
-        opc[0] = 3; // Se o player está em uma coluna impar ele pode ir para baixo
+        opc[0].y = 3; // Se o player está em uma coluna impar ele pode ir para baixo
+        opc[1].y = 1;
     }
 
     if (player->pos[0].y%2 == 0 && player->pos[0].x != cellsNum)
     {
-        opc[1] = 2; // Se o player está em uma linha par ele pode ir para direita
+        opc[0].x = 2; // Se o player está em uma linha par ele pode ir para direita
+        opc[1].x = 1;
     } 
-    if(player->pos[0].y%2 == 1 && player->pos[0].x != 1) {
-        opc[1] = 4; // Se o player está em uma linha impar ele pode ir para esquerda
+    if(player->pos[0].y%2 == 1 && (player->pos[0].x != 1)) {
+        opc[0].x = 4; // Se o player está em uma linha impar ele pode ir para esquerda
+        opc[1].x = -1;
     }
 
-    if(opc[0] == 0){
-        player->moveDir = opc[1];
-    } else if(opc[1] == 0){
-        player->moveDir = opc[0];
+    if(opc[0].x == 0){
+        player->moveDir = opc[0].y;
+    } else if(opc[0].y == 0){
+        player->moveDir = opc[0].x;
     } else {
-        for (int i = 1; i <= player->size; i++)
+        if (player->size > 3)
         {
-            if (opc[0] == 1 && player->pos[0].x == player->pos[i].x && player->pos[0].y-1 == player->pos[i].y)
+            for (int i = 1; i < player->size; i++)
             {
-                player->moveDir = opc[1];
-                break;
-            } else if (opc[0] == 3 && player->pos[0].x == player->pos[i].x && player->pos[0].y+1 == player->pos[i].y)
+                if (player->pos[0].x == player->pos[i].x && player->pos[0].y+opc[1].y == player->pos[i].y)
+                {
+                    player->moveDir = opc[0].x;
+                    pColision = true;
+                    break;
+                } else if (player->pos[0].x+opc[1].x == player->pos[i].x && player->pos[0].y == player->pos[i].y)
+                {
+                    player->moveDir = opc[0].y;
+                    pColision = true;
+                    break;
+                }    
+            }
+        }
+        if (!pColision)
+        {
+            disEuY = pow((player->pos[0].x - apple.x),2) + pow((player->pos[0].y+opc[1].y-apple.y),2);
+            disEuX = pow((player->pos[0].x+opc[1].x - apple.x),2) + pow((player->pos[0].y-apple.y),2);
+            if (disEuX == disEuY)
             {
-                player->moveDir = opc[1];
-                break;
-            } else if (opc[1] == 2 && player->pos[0].x+1 == player->pos[i].x && player->pos[0].y == player->pos[i].y)
+                if (rand()%2)
+                {
+                    player->moveDir = opc[0].x;
+                } else {
+                    player->moveDir = opc[0].y;
+                }
+            } else if (disEuX < disEuY)
             {
-                player->moveDir = opc[0];
-                break;
-            } else if (opc[1] == 4 && player->pos[0].x-1 == player->pos[i].x && player->pos[0].y == player->pos[i].y)
-            {
-                player->moveDir = opc[0];
-                break;
+                player->moveDir = opc[0].x;
             } else {
-                if(opc[0]==1){
-                    disEu0 = ((player->pos[0].x - apple.x)*(player->pos[0].x - apple.x)) + (((player->pos[0].y-1) - apple.y)*(player->pos[0].y-1 - apple.y));
-                } else {
-                    disEu0 = ((player->pos[0].x - apple.x)*(player->pos[0].x - apple.x)) + ((player->pos[0].y+1 - apple.y)*(player->pos[0].y+1 - apple.y));
-                }
-                if(opc[1]==2){
-                    disEu1 = (((player->pos[0].x+1) - apple.x)*((player->pos[0].x+1) - apple.x)) + ((player->pos[0].y - apple.y)*(player->pos[0].y - apple.y));
-                } else {
-                    disEu1 = (((player->pos[0].x-1) - apple.x)*((player->pos[0].x-1) - apple.x)) + ((player->pos[0].y - apple.y)*(player->pos[0].y - apple.y));
-                }
-                if (disEu0 == disEu1)
-                {
-                    if (decide)
-                    {
-                        player->moveDir = opc[0];
-                    } else {
-                        player->moveDir = opc[1];
-                    }
-                } else if (disEu0 < disEu1)
-                {
-                    player->moveDir = opc[0];
-                } else {
-                    player->moveDir = opc[1];
-                }
+                player->moveDir = opc[0].y;
             }
         }        
     }
@@ -266,34 +266,38 @@ int main(int argc, char **argv)
          //Eat apple
         if (player.pos[0].x == apple.x && player.pos[0].y == apple.y)
         {
+            player.size++;
             if (player.size >= cellsNum*cellsNum) //Wingame
             {
                 printf("|runs = %d|\n", runs);
                 runs = 0;
-                SDL_Delay(2000);
-                gameReset = true;
+                
             } else {
                 createApple(player, &apple);
-                player.size++;
             }
-            
-            
         }
 
         //Colision
         if (player.pos[0].x > cellsNum || player.pos[0].x < 1)
         {
             gameReset = true;
+            printf("Game Over!!!x");
+            SDL_Delay(100);
         }else if (player.pos[0].y > cellsNum || player.pos[0].y < 1)
         {
             gameReset = true;
+            printf("Game Over!!!y");
+            SDL_Delay(100);
         }
 
-        for (int i = 1; i <= player.size; i++)
+        for (int i = 1; i < player.size && !gameReset; i++)
         {
             if (player.pos[0].x == player.pos[i].x && player.pos[0].y == player.pos[i].y)
             {
                 gameReset = true;
+                printf("moveDir: %d\n", player.moveDir);
+                printf("Game Over!!!");
+                SDL_Delay(100);
             }            
         }
 
@@ -302,7 +306,6 @@ int main(int argc, char **argv)
             resetGame(&player);
             createApple(player, &apple);
             gameReset = false;
-            SDL_Delay(1000);
         }
         
         // Render Objects
@@ -331,20 +334,26 @@ int main(int argc, char **argv)
                 for (int k = player.size-1; k >= 0; k--)
                 {
                     if (i == player.pos[k].x && j == player.pos[k].y){
-                        SDL_SetRenderDrawColor(renderer, k*150/player.size, player.color.g, k*150/player.size, 255);
+                        SDL_SetRenderDrawColor(renderer, 0, 255-(255*(k+1)/(player.size)), 255*(k+1)/(player.size), 255);
                     }
                 }
                 
                 SDL_RenderFillRect(renderer, &cell);               // Fill the Cells
+                
             }
             
-        }     
+        }  
 
         // BACKGROUND
         SDL_SetRenderDrawColor(renderer, 15, 15, 15, 255); // Background Collor
         SDL_RenderPresent(renderer);                        // Fill the Screen with background collor
+        
+        if(player.size >= cellsNum*cellsNum){
+            SDL_Delay(1000);
+            gameReset = true;
+        }   
 
-        SDL_Delay(1);
+        //SDL_Delay(50);
     }
 
     // END OF PROGRAM
