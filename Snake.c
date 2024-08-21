@@ -20,7 +20,7 @@ g++ .\Snake.c -I ..\SDL2\x86_64-w64-mingw32\include\ -L ..\SDL2\x86_64-w64-mingw
 #define windowW 480
 #define windowH 480
 
-#define cellsNum 20  // Number of cells in the grid = (cellNum*cellNum)
+#define cellsNum 10  // Number of cells in the grid = (cellNum*cellNum)
 #define gridSize 400 //  Size of grid (in pixels)
 #define cellSize gridSize/cellsNum
 
@@ -101,7 +101,7 @@ void AIsnake(tSnake *player, tObj apple){
    bool pColision = false;
    float disEuX, disEuY;
 
-    if (player->pos[0].x%2 == 0 && (player->pos[0].y != 1))
+    if (player->pos[0].x%2 == 0 && player->pos[0].y != 1)
     {
         opc[0].y = 1; // Se o player está em uma coluna par ele pode ir para cima
         opc[1].y = -1; 
@@ -116,7 +116,7 @@ void AIsnake(tSnake *player, tObj apple){
         opc[0].x = 2; // Se o player está em uma linha par ele pode ir para direita
         opc[1].x = 1;
     } 
-    if(player->pos[0].y%2 == 1 && (player->pos[0].x != 1)) {
+    if(player->pos[0].y%2 == 1 && player->pos[0].x != 1) {
         opc[0].x = 4; // Se o player está em uma linha impar ele pode ir para esquerda
         opc[1].x = -1;
     }
@@ -145,8 +145,8 @@ void AIsnake(tSnake *player, tObj apple){
         }
         if (!pColision)
         {
-            disEuY = pow((player->pos[0].x - apple.x),2) + pow((player->pos[0].y+opc[1].y-apple.y),2);
-            disEuX = pow((player->pos[0].x+opc[1].x - apple.x),2) + pow((player->pos[0].y-apple.y),2);
+            disEuY = sqrt(pow((player->pos[0].x - apple.x),2) + pow((player->pos[0].y+opc[1].y-apple.y),2));
+            disEuX = sqrt(pow((player->pos[0].x+opc[1].x - apple.x),2) + pow((player->pos[0].y-apple.y),2));
             if (disEuX == disEuY)
             {
                 if (rand()%2)
@@ -229,7 +229,7 @@ int main(int argc, char **argv)
             }      
         }
 
-        AIsnake(&player, apple);
+        //AIsnake(&player, apple);
 
         //Move player segs
         for (int i = player.size; i >= 1; i--)
@@ -353,7 +353,7 @@ int main(int argc, char **argv)
             gameReset = true;
         }   
 
-        //SDL_Delay(50);
+        SDL_Delay(80);
     }
 
     // END OF PROGRAM
